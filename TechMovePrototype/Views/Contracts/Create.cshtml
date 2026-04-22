@@ -1,0 +1,88 @@
+﻿@model TechMovePrototype.Models.Contract
+@{
+    ViewData["Title"] = "Create New Contract";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div asp-validation-summary="All" class="text-danger mb-4"></div>
+
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" asp-action="Create" enctype="multipart/form-data">
+
+            <!-- Client Dropdown with Hidden Field -->
+            <div class="mb-3">
+                <label class="form-label fw-bold">Client <span class="text-danger">*</span></label>
+                <select id="ClientSelect" class="form-select" onchange="updateClientId()">
+                    <option value="">-- Select a Client --</option>
+                    @if (ViewBag.Clients != null)
+                    {
+                        foreach (var item in (Microsoft.AspNetCore.Mvc.Rendering.SelectList)ViewBag.Clients)
+                        {
+                            bool isSelected = Model?.ClientId.HasValue == true && Model.ClientId.Value.ToString() == item.Value;
+                            <option value="@item.Value" selected="@isSelected">@item.Text</option>
+                        }
+                    }
+                </select>
+                <input type="hidden" name="ClientId" id="ClientIdHidden" value="@(Model?.ClientId)" />
+                <span asp-validation-for="ClientId" class="text-danger"></span>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="StartDate" class="form-label fw-bold">Start Date</label>
+                    <input asp-for="StartDate" class="form-control" />
+                    <span asp-validation-for="StartDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label asp-for="EndDate" class="form-label fw-bold">End Date</label>
+                    <input asp-for="EndDate" class="form-control" />
+                    <span asp-validation-for="EndDate" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Status" class="form-label fw-bold">Status</label>
+                <select asp-for="Status" class="form-select">
+                    @foreach (var value in Enum.GetValues(typeof(TechMovePrototype.Models.Enums.ContractStatus)))
+                    {
+                        <option value="@value">@value</option>
+                    }
+                </select>
+                <span asp-validation-for="Status" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ServiceLevel" class="form-label fw-bold">Service Level</label>
+                <input asp-for="ServiceLevel" class="form-control" />
+                <span asp-validation-for="ServiceLevel" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Signed Agreement (PDF) <span class="text-danger">*</span></label>
+                <input type="file" name="signedAgreement" accept=".pdf" class="form-control" />
+                <small class="text-muted">Only PDF files are allowed</small>
+                @Html.ValidationMessage("signedAgreement", new { @class = "text-danger" })
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success btn-lg">Create Contract</button>
+                <a asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function updateClientId() {
+            document.getElementById("ClientIdHidden").value = document.getElementById("ClientSelect").value;
+        }
+        // Run on page load
+        window.addEventListener('load', updateClientId);
+    </script>
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

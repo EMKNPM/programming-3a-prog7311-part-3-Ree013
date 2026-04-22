@@ -1,0 +1,37 @@
+﻿@model TechMovePrototype.Models.ServiceRequest
+@{
+    ViewData["Title"] = $"Service Request # @Model.Id";
+}
+
+<h2>Service Request Details # @Model.Id</h2>
+
+<div class="card">
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Contract</dt>
+            <dd class="col-sm-9">@Model.Contract?.Client?.Name (@Model.Contract?.ServiceLevel)</dd>
+
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.Description</dd>
+
+            <dt class="col-sm-3">USD Amount</dt>
+            <dd class="col-sm-9">@Model.USDValue.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</dd>
+
+            <dt class="col-sm-3">ZAR Cost</dt>
+            <dd class="col-sm-9"><strong>ZAR</strong> @Model.ZARCost.ToString("N2")</dd>
+
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">
+                <span class="badge bg-@(Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Completed ? "success" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.InProgress ? "primary" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Rejected ? "danger" : "warning")">
+                    @Model.Status
+                </span>
+            </dd>
+        </dl>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary">Edit</a>
+    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger">Delete</a>
+    <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+</div>

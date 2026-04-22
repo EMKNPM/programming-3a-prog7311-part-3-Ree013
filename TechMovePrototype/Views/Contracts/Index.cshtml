@@ -1,0 +1,83 @@
+﻿@model IEnumerable<TechMovePrototype.Models.Contract>
+
+@{
+    ViewData["Title"] = "Contracts";
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Contracts</h2>
+    <a asp-action="Create" class="btn btn-success">+ New Contract</a>
+</div>
+
+<!-- Filter Form -->
+<form asp-action="Index" method="get" class="card p-3 mb-4 bg-light">
+    <div class="row g-3">
+        <div class="col-md-3">
+            <label class="form-label">From Date</label>
+            <input type="date" name="fromDate" value="@ViewBag.FromDate" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">To Date</label>
+            <input type="date" name="toDate" value="@ViewBag.ToDate" class="form-control" />
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Status</label>
+            <select name="status" class="form-select">
+                <option value="">All Statuses</option>
+                @foreach (var s in Enum.GetValues(typeof(TechMovePrototype.Models.Enums.ContractStatus)))
+                {
+                    <option value="@s" selected="@(ViewBag.Status?.ToString() == s.ToString())">@s</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
+            <a asp-action="Index" class="btn btn-secondary">Clear</a>
+        </div>
+    </div>
+</form>
+
+<table class="table table-hover align-middle">
+    <thead class="table-dark">
+        <tr>
+            <th>Client</th>
+            <th>Start Date</th>
+            <th>End Date</th>
+            <th>Status</th>
+            <th>Service Level</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.Client?.Name</td>
+                <td>@item.StartDate.ToShortDateString()</td>
+                <td>@item.EndDate.ToShortDateString()</td>
+                <td><span class="badge bg-@(item.Status == TechMovePrototype.Models.Enums.ContractStatus.Active ? "success" : item.Status == TechMovePrototype.Models.Enums.ContractStatus.Expired ? "danger" : "warning")">@item.Status</span></td>
+                <td>@item.ServiceLevel</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-info btn-sm">View</a>
+                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-primary btn-sm">Edit</a>
+                    @if (!string.IsNullOrEmpty(item.SignedAgreementFilePath))
+                    {
+                        <a asp-action="DownloadAgreement" asp-route-id="@item.Id" class="btn btn-success btn-sm">Download PDF</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No contracts match your filter.</div>
+}

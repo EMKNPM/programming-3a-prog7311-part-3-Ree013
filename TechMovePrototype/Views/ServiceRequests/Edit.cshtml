@@ -1,0 +1,63 @@
+﻿@model TechMovePrototype.Models.ServiceRequest
+@{
+    ViewData["Title"] = "Edit Service Request";
+}
+
+<h2>Edit Service Request #@Model.Id</h2>
+
+<div asp-validation-summary="All" class="text-danger mb-4"></div>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" name="Id" value="@Model.Id" />
+            <input type="hidden" name="ContractId" value="@Model.ContractId" />
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">USD Amount (Dollar Value) <span class="text-danger">*</span></label>
+                <input type="number" name="USDValue" id="usdInput" step="0.01" min="0.01"
+                       class="form-control" value="@Model.USDValue" required />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">ZAR Cost (Auto-calculated)</label>
+                <input type="text" id="zarOutput" class="form-control bg-light" readonly />
+                <input type="hidden" name="ZARCost" id="ZARCostHidden" value="@Model.ZARCost" />
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Description</label>
+                <textarea name="Description" class="form-control" rows="4">@Model.Description</textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Status</label>
+                <select name="Status" class="form-select">
+                    @foreach (var value in Enum.GetValues(typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
+                    {
+                        <option value="@value" selected="@(value.ToString() == Model.Status.ToString())">@value</option>
+                    }
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg">Save Changes</button>
+            <a asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const rate = 18.5;
+
+        // Set initial ZAR display
+        document.getElementById('zarOutput').value = "ZAR " + (@Model.ZARCost).toFixed(2);
+
+        document.getElementById('usdInput').addEventListener('input', function () {
+            const usd = parseFloat(this.value) || 0;
+            const zar = (usd * rate).toFixed(2);
+            document.getElementById('ZARCostHidden').value = zar;
+            document.getElementById('zarOutput').value = "ZAR " + zar;
+        });
+    </script>
+}

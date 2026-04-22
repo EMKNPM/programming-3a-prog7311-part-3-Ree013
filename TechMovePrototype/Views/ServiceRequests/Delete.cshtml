@@ -1,0 +1,24 @@
+﻿@model TechMovePrototype.Models.ServiceRequest
+
+<h2>Delete Service Request #@Model.Id</h2>
+
+<div class="alert alert-danger">
+    Are you sure you want to delete this Service Request?
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Contract</dt>
+    <dd class="col-sm-9">@Model.Contract?.Client?.Name</dd>
+    <dt class="col-sm-3">Description</dt>
+    <dd class="col-sm-9">@Model.Description</dd>
+    <dt class="col-sm-3">USD Value</dt>
+    <dd class="col-sm-9">@Model.USDValue</dd>
+    <dt class="col-sm-3">ZAR Cost</dt>
+    <dd class="col-sm-9">@Model.ZARCost</dd>
+</dl>
+
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+    <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+</form>

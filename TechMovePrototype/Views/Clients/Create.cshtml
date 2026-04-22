@@ -1,0 +1,49 @@
+﻿@model TechMovePrototype.Models.Client
+@{
+    ViewData["Title"] = "Create New Client";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label fw-bold"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ContactEmail" class="form-label fw-bold"></label>
+                <input asp-for="ContactEmail" class="form-control" type="email" />
+                <span asp-validation-for="ContactEmail" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ContactPhone" class="form-label fw-bold"></label>
+                <input asp-for="ContactPhone" class="form-control" type="tel" />
+                <span asp-validation-for="ContactPhone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Region" class="form-label fw-bold"></label>
+                <input asp-for="Region" class="form-control" placeholder="e.g. KwaZulu-Natal, Gauteng, Western Cape" />
+                <span asp-validation-for="Region" class="text-danger"></span>
+            </div>
+
+            <div class="mt-4">
+                <button type="submit" class="btn btn-success btn-lg">Create Client</button>
+                <a asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
