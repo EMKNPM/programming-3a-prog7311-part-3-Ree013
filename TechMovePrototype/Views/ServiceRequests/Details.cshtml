@@ -22,7 +22,7 @@
 
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">
-                <span class="badge bg-@(Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Completed ? "success" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.InProgress ? "primary" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Rejected ? "danger" : "warning")">
+                <span class="badge bg-@(Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Approved ? "success" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.InProgress ? "primary" : Model.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Rejected ? "danger" : "warning")">
                     @Model.Status
                 </span>
             </dd>

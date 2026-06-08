@@ -1,41 +1,69 @@
 ﻿@model TechMovePrototype.Models.ServiceRequest
+
 @{
-    ViewData["Title"] = "Edit Service Request";
+    ViewData["Title"] = $"Edit Service Request #{Model.Id}";
+    var rate = ViewBag.UsdToZarRate as decimal? ?? 18.5m;
 }
 
 <h2>Edit Service Request #@Model.Id</h2>
+<p><strong>Contract:</strong> @Model.Contract?.Client?.Name - @Model.Contract?.ServiceLevel</p>
 
 <div asp-validation-summary="All" class="text-danger mb-4"></div>
 
 <div class="row">
     <div class="col-md-8">
-        <form asp-action="Edit" method="post">
-            <input type="hidden" name="Id" value="@Model.Id" />
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" id="editForm">
+
             <input type="hidden" name="ContractId" value="@Model.ContractId" />
 
             <div class="mb-3">
-                <label class="form-label fw-bold">USD Amount (Dollar Value) <span class="text-danger">*</span></label>
-                <input type="number" name="USDValue" id="usdInput" step="0.01" min="0.01"
-                       class="form-control" value="@Model.USDValue" required />
+                <label class="form-label fw-bold">
+                    USD Amount (Dollar Value) <span class="text-danger">*</span>
+                </label>
+                @* value="@Model.USDValue" pre-fills the existing amount *@
+                <input type="number"
+                       id="usdInput"
+                       step="0.01"
+                       min="0.01"
+                       class="form-control"
+                       value="@Model.USDValue.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" 
+                       required />
+                <input type="hidden" name="USDValue" id="USDValueHidden"
+                       value="@Model.USDValue.ToString("F2", System.Globalization.CultureInfo.InvariantCulture)" />
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">ZAR Cost (Auto-calculated)</label>
-                <input type="text" id="zarOutput" class="form-control bg-light" readonly />
-                <input type="hidden" name="ZARCost" id="ZARCostHidden" value="@Model.ZARCost" />
+                <input type="text"
+                       id="zarOutput"
+                       class="form-control bg-light"
+                       readonly />
+                <input type="hidden" name="ZARCost" id="ZARCostHidden"
+                       value="@Model.ZARCost.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                <small class="text-muted">Rate: 1 USD = @rate.ToString("F2") ZAR</small>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Description</label>
-                <textarea name="Description" class="form-control" rows="4">@Model.Description</textarea>
+                <textarea name="Description"
+                          class="form-control"
+                          rows="4">@Model.Description</textarea>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Status</label>
                 <select name="Status" class="form-select">
-                    @foreach (var value in Enum.GetValues(typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
+                    @foreach (var value in Enum.GetValues(
+                    typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
                     {
-                        <option value="@value" selected="@(value.ToString() == Model.Status.ToString())">@value</option>
+                        if (value.ToString() == Model.Status.ToString())
+                        {
+                            <option value="@value" selected>@value</option>
+                        }
+                        else
+                        {
+                            <option value="@value">@value</option>
+                        }
                     }
                 </select>
             </div>
@@ -48,16 +76,26 @@
 
 @section Scripts {
     <script>
-        const rate = 18.5;
+        const rate = @rate.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        // Set initial ZAR display
-        document.getElementById('zarOutput').value = "ZAR " + (@Model.ZARCost).toFixed(2);
-
-        document.getElementById('usdInput').addEventListener('input', function () {
-            const usd = parseFloat(this.value) || 0;
+        function updateZar() {
+            const usd = parseFloat(document.getElementById('usdInput').value) || 0;
             const zar = (usd * rate).toFixed(2);
+
+            document.getElementById('USDValueHidden').value = usd.toFixed(2);
             document.getElementById('ZARCostHidden').value = zar;
-            document.getElementById('zarOutput').value = "ZAR " + zar;
+            document.getElementById('zarOutput').value = 'ZAR ' + zar;
+        }
+
+      
+        window.addEventListener('load', updateZar);
+
+       
+        document.getElementById('usdInput').addEventListener('input', updateZar);
+
+       
+        document.getElementById('editForm').addEventListener('submit', function () {
+            updateZar();
         });
     </script>
 }

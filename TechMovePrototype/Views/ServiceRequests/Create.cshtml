@@ -1,4 +1,5 @@
 ﻿@model TechMovePrototype.Models.ServiceRequest
+
 @{
     ViewData["Title"] = "Create Service Request";
     var rate = ViewBag.UsdToZarRate as decimal? ?? 18.5m;
@@ -12,37 +13,62 @@
 <div class="row">
     <div class="col-md-8">
         <form asp-action="Create" method="post" id="serviceRequestForm">
+
+            @* ContractId is passed as a hidden field — no dropdown needed *@
             <input type="hidden" name="ContractId" value="@ViewBag.ContractId" />
 
             <div class="mb-3">
-                <label class="form-label fw-bold">USD Amount <span class="text-danger">*</span></label>
-                <input type="number" id="usdInput" step="0.01" min="0.01" class="form-control" required />
+                <label class="form-label fw-bold">
+                    USD Amount <span class="text-danger">*</span>
+                </label>
+                <input type="number"
+                       id="usdInput"
+                       step="0.01"
+                       min="0.01"
+                       class="form-control"
+                       placeholder="0.00"
+                       required />
                 <input type="hidden" name="USDValue" id="USDValueHidden" value="0" />
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">ZAR Cost (Auto-calculated)</label>
-                <input type="text" id="zarOutput" class="form-control bg-light" readonly />
+                <input type="text"
+                       id="zarOutput"
+                       class="form-control bg-light"
+                       readonly
+                       placeholder="ZAR 0.00" />
                 <input type="hidden" name="ZARCost" id="ZARCostHidden" value="0" />
+                <small class="text-muted">
+                    Live rate: 1 USD = @rate.ToString("F2") ZAR
+                </small>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Description</label>
-                <textarea name="Description" class="form-control" rows="4"></textarea>
+                <textarea name="Description"
+                          class="form-control"
+                          rows="4"
+                          placeholder="Describe the service request..."></textarea>
             </div>
 
             <div class="mb-3">
                 <label class="form-label fw-bold">Status</label>
                 <select name="Status" class="form-select">
-                    @foreach (var value in Enum.GetValues(typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
+                    @foreach (var value in Enum.GetValues(
+                    typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
                     {
                         <option value="@value">@value</option>
                     }
                 </select>
             </div>
 
-            <button type="submit" class="btn btn-success btn-lg">Create Service Request</button>
-            <a asp-controller="Contracts" asp-action="Index" class="btn btn-secondary btn-lg">Cancel</a>
+            <button type="submit" class="btn btn-success btn-lg">
+                Create Service Request
+            </button>
+            <a asp-controller="Contracts"
+               asp-action="Index"
+               class="btn btn-secondary btn-lg">Cancel</a>
         </form>
     </div>
 </div>
@@ -52,23 +78,22 @@
         const rate = @rate.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         function updateHiddenFields() {
-            const usdInput = document.getElementById('usdInput');
-            const usd = parseFloat(usdInput.value) || 0;
+            const usd = parseFloat(document.getElementById('usdInput').value) || 0;
             const zar = (usd * rate).toFixed(2);
 
             document.getElementById('USDValueHidden').value = usd.toFixed(2);
             document.getElementById('ZARCostHidden').value = zar;
-            document.getElementById('zarOutput').value = "ZAR " + zar;
+            document.getElementById('zarOutput').value = 'ZAR ' + zar;
         }
 
-        document.getElementById('usdInput').addEventListener('input', updateHiddenFields);
+        document.getElementById('usdInput')
+            .addEventListener('input', updateHiddenFields);
 
-        // Force update on form submit
-        document.getElementById('serviceRequestForm').addEventListener('submit', function (e) {
-            updateHiddenFields();
-        });
+        document.getElementById('serviceRequestForm')
+            .addEventListener('submit', function () {
+                updateHiddenFields();
+            });
 
-        // Initial update
         window.addEventListener('load', updateHiddenFields);
     </script>
 }

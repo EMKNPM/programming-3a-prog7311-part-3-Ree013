@@ -3,8 +3,7 @@
 public enum ServiceRequestStatus
 {
     Pending,
-    Approved,
     InProgress,
-    Completed,
+    Approved,
     Rejected
 }

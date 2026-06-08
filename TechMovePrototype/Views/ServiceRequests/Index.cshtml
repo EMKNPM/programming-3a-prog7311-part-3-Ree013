@@ -25,9 +25,9 @@
                 <td>@item.USDValue.ToString("C2", System.Globalization.CultureInfo.GetCultureInfo("en-US"))</td>
                 <td><strong>ZAR</strong> @item.ZARCost.ToString("N2")</td>
                 <td>
-                    <span class="badge bg-@(item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Completed ? "success" :
-                                               item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.InProgress ? "primary" :
-                                               item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Rejected ? "danger" : "warning")">
+                    <span class="badge bg-@(item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Approved ? "success" :
+                           item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.InProgress ? "primary" :
+                           item.Status == TechMovePrototype.Models.Enums.ServiceRequestStatus.Rejected ? "danger" : "warning")">
                         @item.Status
                     </span>
                 </td>

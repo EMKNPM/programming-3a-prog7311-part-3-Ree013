@@ -1,26 +1,29 @@
-using Microsoft.EntityFrameworkCore;
-using TechMovePrototype.Data;
-using TechMovePrototype.Observers;
+
+
 using TechMovePrototype.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "http://localhost:5001/";
 
+builder.Services.AddHttpClient<IApiService, ApiService>(client =>
+{
+    client.BaseAddress = new Uri(apiBaseUrl);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
 
 builder.Services.AddHttpClient();
 
-builder.Services.AddScoped<IContractObserver, ServiceRequestBlockerObserver>();
-
-
-builder.Services.AddScoped<IValidationService, ValidationService>();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(8);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
-
 
 if (!app.Environment.IsDevelopment())
 {
@@ -30,9 +33,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseRouting();
-
+app.UseSession();
 app.UseAuthorization();
 
 app.MapControllerRoute(

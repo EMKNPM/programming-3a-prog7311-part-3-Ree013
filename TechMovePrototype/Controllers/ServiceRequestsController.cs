@@ -1,74 +1,186 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text.Json;
-using TechMovePrototype.Data;
 using TechMovePrototype.Models;
 using TechMovePrototype.Models.Enums;
+using TechMovePrototype.Services;
+
 
 namespace TechMovePrototype.Controllers;
 
 public class ServiceRequestsController : Controller
 {
-    private readonly AppDbContext _context;
+    private readonly IApiService _api;
     private readonly IHttpClientFactory _httpClientFactory;
 
-    public ServiceRequestsController(AppDbContext context, IHttpClientFactory httpClientFactory)
+    public ServiceRequestsController(IApiService api, IHttpClientFactory httpClientFactory)
     {
-        _context = context;
+        _api = api;
         _httpClientFactory = httpClientFactory;
     }
 
-    // GET: ServiceRequests
     public async Task<IActionResult> Index()
     {
-        var requests = await _context.ServiceRequests
-            .Include(s => s.Contract)
-                .ThenInclude(c => c.Client)
-            .OrderByDescending(s => s.Id)
-            .ToListAsync();
-
+        var requests = await _api.GetAsync<List<ServiceRequest>>("api/servicerequests")
+                       ?? new List<ServiceRequest>();
         return View(requests);
     }
 
-    // GET: ServiceRequests/Details/5
-    public async Task<IActionResult> Details(int? id)
+    public async Task<IActionResult> Details(int id)
     {
-        if (id == null) return NotFound();
-
-        var serviceRequest = await _context.ServiceRequests
-            .Include(s => s.Contract)
-                .ThenInclude(c => c.Client)
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        if (serviceRequest == null) return NotFound();
-
-        return View(serviceRequest);
+        var request = await _api.GetAsync<ServiceRequest>($"api/servicerequests/{id}");
+        if (request == null) return NotFound();
+        return View(request);
     }
 
-    // GET: ServiceRequests/Create?contractId=5
     public async Task<IActionResult> Create(int contractId)
     {
-        var contract = await _context.Contracts
-            .Include(c => c.Client)
-            .FirstOrDefaultAsync(c => c.Id == contractId);
-
+        var contract = await _api.GetAsync<Contract>($"api/contracts/{contractId}");
         if (contract == null) return NotFound();
 
-        if (contract.Status == ContractStatus.Expired || contract.Status == ContractStatus.OnHold)
+        if (contract.Status == ContractStatus.Expired ||
+            contract.Status == ContractStatus.OnHold)
         {
-            TempData["Error"] = "Cannot create Service Request for an Expired or On Hold contract.";
+            TempData["Error"] = "Cannot create a Service Request for an Expired or On Hold contract.";
             return RedirectToAction("Index", "Contracts");
         }
 
         ViewBag.ContractId = contractId;
-        ViewBag.ContractInfo = $"{contract.Client.Name} - {contract.ServiceLevel}";
+        ViewBag.ContractInfo = $"{contract.Client?.Name} - {contract.ServiceLevel}";
+        ViewBag.UsdToZarRate = await FetchUsdToZarRateAsync();
+        return View();
+    }
 
-        decimal rate = 18.5m;
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create()
+    {
+        int.TryParse(Request.Form["ContractId"], out int contractId);
+        decimal.TryParse(Request.Form["USDValue"], NumberStyles.Any,
+            CultureInfo.InvariantCulture, out decimal usdValue);
+        decimal.TryParse(Request.Form["ZARCost"], NumberStyles.Any,
+            CultureInfo.InvariantCulture, out decimal zarValue);
+
+        string description = Request.Form["Description"].ToString().Trim();
+
+        if (contractId <= 0)
+            ModelState.AddModelError("ContractId", "Contract is required.");
+        if (usdValue <= 0)
+            ModelState.AddModelError("USDValue", "USD Amount must be greater than 0.");
+        if (string.IsNullOrWhiteSpace(description))
+            ModelState.AddModelError("Description", "Description is required.");
+
+        if (ModelState.IsValid)
+        {
+            var created = await _api.PostAsync<ServiceRequest>("api/servicerequests", new
+            {
+                ContractId = contractId,
+                Description = description,
+                USDValue = usdValue,
+                ZARCost = zarValue
+            });
+
+            if (created != null)
+            {
+                TempData["Success"] = "Service Request created successfully!";
+                return RedirectToAction("Index", "Contracts");
+            }
+
+            ModelState.AddModelError("", "Failed to create request. The contract may be Expired or On Hold.");
+        }
+
+        ViewBag.ContractId = contractId;
+        ViewBag.UsdToZarRate = 18.5m;
+
+        if (contractId > 0)
+        {
+            var contract = await _api.GetAsync<Contract>($"api/contracts/{contractId}");
+            ViewBag.ContractInfo = contract != null
+                ? $"{contract.Client?.Name} - {contract.ServiceLevel}"
+                : "";
+        }
+
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Edit(int id)
+    {
+        var request = await _api.GetAsync<ServiceRequest>($"api/servicerequests/{id}");
+        if (request == null) return NotFound();
+
+        ViewBag.UsdToZarRate = await FetchUsdToZarRateAsync();
+        return View(request);
+    }
+
+    [HttpPost]
+    [ActionName("Edit")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> EditPost(int id)
+    {
+        int.TryParse(Request.Form["ContractId"], out int contractId);
+        decimal.TryParse(Request.Form["USDValue"], NumberStyles.Any,
+            CultureInfo.InvariantCulture, out decimal usdValue);
+        decimal.TryParse(Request.Form["ZARCost"], NumberStyles.Any,
+            CultureInfo.InvariantCulture, out decimal zarValue);
+
+        string description = Request.Form["Description"].ToString().Trim();
+        string statusStr = Request.Form["Status"].ToString();
+        Enum.TryParse<TechMovePrototype.Models.Enums.ServiceRequestStatus>(statusStr, out var status);
+
+        if (usdValue <= 0)
+            ModelState.AddModelError("USDValue", "USD Amount must be greater than 0.");
+        if (string.IsNullOrWhiteSpace(description))
+            ModelState.AddModelError("Description", "Description is required.");
+
+        if (ModelState.IsValid)
+        {
+            var updated = await _api.PutAsync<ServiceRequest>($"api/servicerequests/{id}", new
+            {
+                Description = description,
+                USDValue = usdValue,
+                ZARCost = zarValue,
+                Status = statusStr
+            });
+
+            if (updated != null)
+            {
+                TempData["Success"] = "Service Request updated successfully!";
+                return RedirectToAction(nameof(Index));
+            }
+
+            ModelState.AddModelError("", "Failed to update service request. Please try again.");
+        }
+
+        var request = await _api.GetAsync<ServiceRequest>($"api/servicerequests/{id}")
+                      ?? new ServiceRequest { Id = id };
+        ViewBag.UsdToZarRate = 18.5m;
+        return View(request);
+    }
+
+    public async Task<IActionResult> Delete(int id)
+    {
+        var request = await _api.GetAsync<ServiceRequest>($"api/servicerequests/{id}");
+        if (request == null) return NotFound();
+        return View(request);
+    }
+
+    [HttpPost, ActionName("Delete")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteConfirmed(int id)
+    {
+        await _api.DeleteAsync($"api/servicerequests/{id}");
+        TempData["Success"] = "Service Request deleted.";
+        return RedirectToAction(nameof(Index));
+    }
+
+    private async Task<decimal> FetchUsdToZarRateAsync()
+    {
         try
         {
-            var client = _httpClientFactory.CreateClient();
-            var response = await client.GetAsync("https://open.er-api.com/v6/latest/USD");
+            var httpClient = _httpClientFactory.CreateClient();
+            var response = await httpClient.GetAsync("https://open.er-api.com/v6/latest/USD");
+
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
@@ -76,166 +188,12 @@ public class ServiceRequestsController : Controller
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
                 if (data?.Rates != null && data.Rates.TryGetValue("ZAR", out var zarRate))
-                    rate = zarRate;
+                    return zarRate;
             }
         }
-        catch { }
+        catch { /* fall through to default */ }
 
-        ViewBag.UsdToZarRate = rate;
-
-        return View();
-    }
-
-    // POST: ServiceRequests/Create
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create()
-    {
-        int contractId = 0;
-        decimal usdValue = 0;
-        decimal zarValue = 0;
-        string description = Request.Form["Description"].ToString().Trim();
-        ServiceRequestStatus status = ServiceRequestStatus.Pending;
-
-        int.TryParse(Request.Form["ContractId"], out contractId);
-        decimal.TryParse(Request.Form["USDValue"], NumberStyles.Any, CultureInfo.InvariantCulture, out usdValue);
-        decimal.TryParse(Request.Form["ZARCost"], NumberStyles.Any, CultureInfo.InvariantCulture, out zarValue);
-
-        if (Enum.TryParse(Request.Form["Status"], out ServiceRequestStatus parsedStatus))
-            status = parsedStatus;
-
-        if (contractId <= 0)
-            ModelState.AddModelError("ContractId", "The Contract field is required.");
-
-        if (usdValue <= 0)
-            ModelState.AddModelError("USDValue", "USD Amount must be greater than 0");
-
-        if (string.IsNullOrWhiteSpace(description))
-            ModelState.AddModelError("Description", "Description is required.");
-
-        if (ModelState.IsValid)
-        {
-            var newRequest = new ServiceRequest
-            {
-                ContractId = contractId,
-                Description = description,
-                USDValue = usdValue,
-                ZARCost = zarValue,
-                Status = status
-            };
-
-            _context.ServiceRequests.Add(newRequest);
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = "Service Request created successfully!";
-            return RedirectToAction("Index", "Contracts");
-        }
-
-        ViewBag.ContractId = contractId;
-        ViewBag.UsdToZarRate = 18.5m;
-
-        return View();
-    }
-
-    // GET: ServiceRequests/Edit/5
-    public async Task<IActionResult> Edit(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var serviceRequest = await _context.ServiceRequests
-            .Include(s => s.Contract)
-                .ThenInclude(c => c.Client)
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        if (serviceRequest == null) return NotFound();
-
-        return View(serviceRequest);
-    }
-
-    // POST: ServiceRequests/Edit/5
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id)
-    {
-        int contractId = 0;
-        decimal usdValue = 0;
-        decimal zarValue = 0;
-        string description = Request.Form["Description"].ToString().Trim();
-        ServiceRequestStatus status = ServiceRequestStatus.Pending;
-
-        int.TryParse(Request.Form["ContractId"], out contractId);
-        decimal.TryParse(Request.Form["USDValue"], NumberStyles.Any, CultureInfo.InvariantCulture, out usdValue);
-        decimal.TryParse(Request.Form["ZARCost"], NumberStyles.Any, CultureInfo.InvariantCulture, out zarValue);
-
-        if (Enum.TryParse(Request.Form["Status"], out ServiceRequestStatus parsedStatus))
-            status = parsedStatus;
-
-        if (contractId <= 0)
-            ModelState.AddModelError("ContractId", "The Contract field is required.");
-
-        if (usdValue <= 0)
-            ModelState.AddModelError("USDValue", "USD Amount must be greater than 0");
-
-        if (string.IsNullOrWhiteSpace(description))
-            ModelState.AddModelError("Description", "Description is required.");
-
-        if (ModelState.IsValid)
-        {
-            var serviceRequest = await _context.ServiceRequests.FindAsync(id);
-            if (serviceRequest == null) return NotFound();
-
-            serviceRequest.ContractId = contractId;
-            serviceRequest.Description = description;
-            serviceRequest.USDValue = usdValue;
-            serviceRequest.ZARCost = zarValue;
-            serviceRequest.Status = status;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            catch (Exception ex)
-            {
-                ModelState.AddModelError("", $"Error updating: {ex.Message}");
-            }
-        }
-
-        
-        var reloaded = await _context.ServiceRequests
-            .Include(s => s.Contract)
-                .ThenInclude(c => c.Client)
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        return View(reloaded ?? new ServiceRequest());
-    }
-
-    // GET: ServiceRequests/Delete/5
-    public async Task<IActionResult> Delete(int? id)
-    {
-        if (id == null) return NotFound();
-
-        var serviceRequest = await _context.ServiceRequests
-            .Include(s => s.Contract)
-                .ThenInclude(c => c.Client)
-            .FirstOrDefaultAsync(s => s.Id == id);
-
-        if (serviceRequest == null) return NotFound();
-
-        return View(serviceRequest);
-    }
-
-    // POST: ServiceRequests/Delete/5
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id)
-    {
-        var serviceRequest = await _context.ServiceRequests.FindAsync(id);
-        if (serviceRequest != null)
-        {
-            _context.ServiceRequests.Remove(serviceRequest);
-            await _context.SaveChangesAsync();
-        }
-        return RedirectToAction(nameof(Index));
+        return 18.5m;
     }
 }
+

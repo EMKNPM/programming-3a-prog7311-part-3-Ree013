@@ -3,52 +3,84 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - TechMove Prototype</title>
+    <title>@ViewData["Title"] - TechMove Logistics</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/TechMovePrototype.styles.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;600;700;800&family=Barlow+Condensed:wght@700;800&display=swap" rel="stylesheet" />
 </head>
 <body>
+
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">TechMove Prototype</a>
+        <nav class="tm-navbar">
+            <div class="container-fluid tm-nav-inner">
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
-                        data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <a class="tm-brand" asp-area="" asp-controller="Home" asp-action="Index">
+                 
+                    <span class="tm-brand-text">TechMove <span class="tm-brand-accent">Logistics</span></span>
+                </a>
 
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Clients" asp-action="Index">Clients</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Contracts" asp-action="Index">Contracts</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="ServiceRequests" asp-action="Index">Service Requests</a>
-                        </li>
-                        
-                    </ul>
-                </div>
+                <ul class="tm-nav-links ms-auto">
+                    <li>
+                        <a asp-controller="Home" asp-action="Index" class="tm-nav-link">Home</a>
+                    </li>
+                    <li>
+                        <a asp-controller="Clients" asp-action="Index" class="tm-nav-link">Clients</a>
+                    </li>
+                    <li>
+                        <a asp-controller="Contracts" asp-action="Index" class="tm-nav-link">Contracts</a>
+                    </li>
+                    <li>
+                        <a asp-controller="ServiceRequests" asp-action="Index" class="tm-nav-link">Service Requests</a>
+                    </li>
+                </ul>
+
             </div>
         </nav>
     </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
+    @* Hero banner only shows on the Home page *@
+    @if (ViewData["Title"]?.ToString() == "Home Page")
+    {
+        <section class="tm-hero">
+            <div class="tm-hero-overlay"></div>
+            <div class="container tm-hero-content">
+                <p class="tm-hero-eyebrow">Global Logistics Management System</p>
+                <h1 class="tm-hero-heading">
+                  welcome to<br />
+                    <span class="tm-hero-accent"> global logistics management system.</span>
+                </h1>
+             
+                <div class="tm-hero-actions">
+                    <a asp-controller="Contracts" asp-action="Index" class="tm-btn-primary">View Contracts</a>
+                    <a asp-controller="Clients" asp-action="Index" class="tm-btn-ghost">Manage Clients</a>
+                </div>
+            </div>
+        </section>
+    }
+
+    <div class="container tm-page-content">
+        @if (TempData["Success"] != null)
+        {
+            <div class="tm-alert tm-alert-success">
+                <span>✓</span> @TempData["Success"]
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="tm-alert tm-alert-error">
+                <span>✕</span> @TempData["Error"]
+            </div>
+        }
+        <main role="main" class="pb-4">
             @RenderBody()
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - TechMove Prototype -
-            <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+    <footer class="tm-footer">
+        <div class="container tm-footer-inner">
+            <span class="tm-footer-brand">TechMove Logistics</span>
+          
         </div>
     </footer>
 

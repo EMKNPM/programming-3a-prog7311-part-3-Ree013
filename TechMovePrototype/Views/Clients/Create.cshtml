@@ -12,25 +12,25 @@
 
             <div class="mb-3">
                 <label asp-for="Name" class="form-label fw-bold"></label>
-                <input asp-for="Name" class="form-control" />
+                <input asp-for="Name" class="form-control" autocomplete="name" />
                 <span asp-validation-for="Name" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="ContactEmail" class="form-label fw-bold"></label>
-                <input asp-for="ContactEmail" class="form-control" type="email" />
+                <input asp-for="ContactEmail" class="form-control" type="email" autocomplete="email" />
                 <span asp-validation-for="ContactEmail" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="ContactPhone" class="form-label fw-bold"></label>
-                <input asp-for="ContactPhone" class="form-control" type="tel" />
+                <input asp-for="ContactPhone" class="form-control" type="tel" autocomplete="tel" />
                 <span asp-validation-for="ContactPhone" class="text-danger"></span>
             </div>
 
             <div class="mb-3">
                 <label asp-for="Region" class="form-label fw-bold"></label>
-                <input asp-for="Region" class="form-control" placeholder="e.g. KwaZulu-Natal, Gauteng, Western Cape" />
+                <input asp-for="Region" class="form-control" placeholder="e.g. KwaZulu-Natal, Gauteng, Western Cape" autocomplete="address-level1" />
                 <span asp-validation-for="Region" class="text-danger"></span>
             </div>
 

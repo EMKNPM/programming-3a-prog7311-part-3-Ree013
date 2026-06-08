@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Diagnostics.Contracts;
 
 namespace TechMovePrototype.Models;
 
@@ -16,7 +15,6 @@ public class Client
     public string ContactEmail { get; set; } = string.Empty;
 
     [Required]
-    [Phone]
     public string ContactPhone { get; set; } = string.Empty;
 
     [Required]
