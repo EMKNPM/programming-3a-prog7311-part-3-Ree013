@@ -52,17 +52,7 @@
                           placeholder="Describe the service request..."></textarea>
             </div>
 
-            <div class="mb-3">
-                <label class="form-label fw-bold">Status</label>
-                <select name="Status" class="form-select">
-                    @foreach (var value in Enum.GetValues(
-                    typeof(TechMovePrototype.Models.Enums.ServiceRequestStatus)))
-                    {
-                        <option value="@value">@value</option>
-                    }
-                </select>
-            </div>
-
+            <input type="hidden" name="Status" value="Pending" />
             <button type="submit" class="btn btn-success btn-lg">
                 Create Service Request
             </button>

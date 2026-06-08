@@ -63,13 +63,13 @@
         @if (TempData["Success"] != null)
         {
             <div class="tm-alert tm-alert-success">
-                <span>✓</span> @TempData["Success"]
+              @TempData["Success"]
             </div>
         }
         @if (TempData["Error"] != null)
         {
             <div class="tm-alert tm-alert-error">
-                <span>✕</span> @TempData["Error"]
+               @TempData["Error"]
             </div>
         }
         <main role="main" class="pb-4">
